@@ -10,7 +10,7 @@
     "ios": "doppler run -- expo run:ios",
     "web": "doppler run -- expo start --web",
     "lint": "expo lint",
-    "format": "biome format --write",
+    "format": "biome check --write",
     "generate-db-types": "doppler run -- npx supabase gen types typescript --project-id \"$SUPABASE_PROJECT_ID\" --schema public > types/database.types.ts",
     "build:production": "doppler -c prd run -- eas build --output dist/ios-production.ipa --profile production --platform ios --local",
     "submit": "doppler -c prd run -- eas submit --platform ios --path dist/ios-production.ipa"
@@ -51,10 +51,13 @@
     "react-native-reanimated": "~4.1.1",
     "react-native-safe-area-context": "~5.6.0",
     "react-native-screens": "~4.16.0",
+    "react-native-svg": "^15.15.1",
     "react-native-web": "~0.21.0",
     "react-native-worklets": "0.5.1",
     "tailwind-merge": "^3.4.0",
     "tailwindcss-animate": "^1.0.7",
+    "vexflow": "^5.0.0",
+    "vexflow-react-native-svg": "^1.0.3",
     "zod": "^4.2.1"
   },
   "devDependencies": {

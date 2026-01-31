@@ -5,7 +5,7 @@ import { TextClassContext } from "@/components/ui/text";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "group flex items-center justify-center rounded-md web:ring-offset-background web:transition-colors web:focus-visible:outline-none web:focus-visible:ring-2 web:focus-visible:ring-ring web:focus-visible:ring-offset-2",
+  "group flex flex-row items-center justify-center gap-2 rounded-md web:ring-offset-background web:transition-colors web:focus-visible:outline-none web:focus-visible:ring-2 web:focus-visible:ring-ring web:focus-visible:ring-offset-2",
   {
     variants: {
       variant: {
@@ -46,9 +46,9 @@ const buttonTextVariants = cva(
         link: "text-primary group-active:underline",
       },
       size: {
-        default: "",
-        sm: "text-sm",
-        lg: "text-lg",
+        default: "native:text-lg native:leading-6",
+        sm: "text-sm native:text-base native:leading-5",
+        lg: "text-lg native:text-xl native:leading-7",
         icon: "",
       },
     },
@@ -73,7 +73,7 @@ function Button({ ref, className, variant, size, ...props }: ButtonProps) {
     >
       <Pressable
         className={cn(
-          props.disabled && "opacity-50 web:pointer-events-none",
+          props.disabled && "web:pointer-events-none opacity-50",
           buttonVariants({ variant, size, className }),
         )}
         ref={ref}
