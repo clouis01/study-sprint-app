@@ -116,7 +116,7 @@ export function ActiveSprintsFeed() {
       toast.error("You must be logged in to join a sprint");
       return;
     }
-
+    const uid = userId;
     setJoining(sprint.id);
 
     try {
@@ -125,7 +125,7 @@ export function ActiveSprintsFeed() {
         .from("sprint_participants")
         .select("*")
         .eq("sprint_id", sprint.id)
-        .eq("user_id", userId)
+        .eq("user_id", uid)
         .single();
 
       if (existing) {
@@ -138,7 +138,7 @@ export function ActiveSprintsFeed() {
         .from("sprint_participants")
         .insert({
           sprint_id: sprint.id,
-          user_id: userId,
+          user_id: uid,
         });
 
       if (error) throw error;

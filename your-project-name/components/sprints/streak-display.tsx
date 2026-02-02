@@ -21,12 +21,13 @@ export function StreakDisplay() {
 
   useEffect(() => {
     if (!userId) return;
+    const uid = userId;
 
     async function loadStreak() {
       const { data, error } = await supabase
         .from("user_streaks")
         .select("*")
-        .eq("user_id", userId)
+        .eq("user_id", uid)
         .single();
 
       if (error && error.code !== "PGRST116") {
@@ -52,7 +53,7 @@ export function StreakDisplay() {
           event: "*",
           schema: "public",
           table: "user_streaks",
-          filter: `user_id=eq.${userId}`,
+          filter: `user_id=eq.${uid}`,
         },
         () => {
           loadStreak();

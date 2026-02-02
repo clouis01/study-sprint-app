@@ -32,11 +32,13 @@ export function ActiveSprintTimer() {
   useEffect(() => {
     if (!userId) return;
 
+    const uid = userId;
+
     async function loadActiveSprint() {
       const { data: participants, error: participantsError } = await supabase
         .from("sprint_participants")
         .select("sprint_id")
-        .eq("user_id", userId);
+        .eq("user_id", uid);
 
       if (participantsError?.code === "42P01" || participantsError?.message?.includes("does not exist")) {
         setActiveSprint(null);
@@ -124,6 +126,7 @@ export function ActiveSprintTimer() {
 
   const handleEndEarly = async () => {
     if (!activeSprint || !userId) return;
+    const uid = userId;
 
     try {
       // Remove user from participants
@@ -131,7 +134,7 @@ export function ActiveSprintTimer() {
         .from("sprint_participants")
         .delete()
         .eq("sprint_id", activeSprint.id)
-        .eq("user_id", userId);
+        .eq("user_id", uid);
 
       // Check if there are other participants
       const { data: remainingParticipants } = await supabase
