@@ -154,9 +154,9 @@ export function ActiveSprintsFeed() {
   };
 
   const isUserInSprint = (sprint: SprintWithParticipants) => {
-    return sprint.sprint_participants?.some(
-      (p: any) => p.user_id === userId
-    );
+    if (!userId) return false;
+    const participants = sprint.sprint_participants ?? sprint.participants ?? [];
+    return participants.some((p) => p.user_id === userId);
   };
 
   if (sprints.length === 0) {

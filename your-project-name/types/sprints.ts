@@ -41,5 +41,6 @@ export type Friendship = {
 
 export type SprintWithParticipants = Sprint & {
   participants?: SprintParticipant[];
+  sprint_participants?: SprintParticipant[];
   participant_count?: number;
 };
