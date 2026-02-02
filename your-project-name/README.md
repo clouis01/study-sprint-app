@@ -1,243 +1,118 @@
-# Next.js + Supabase + ShadCN Template
+# Study Sprint
 
-A beginner-friendly template for building full-stack applications with authentication and database storage.
+A study accountability app that reduces procrastination by making studying visible and easy to join, so students feel accountable without pressure.
 
-## What's Included
+## Features
 
-- **Next.js 15** with App Router and TypeScript
-- **Supabase** for authentication and database
-- **ShadCN UI** for beautiful, accessible components
-- **Notes App** example demonstrating:
-  - User signup and login
-  - Protected routes
-  - Create, read, update, delete (CRUD) operations
+### 🏃 Study Sprints
+- Start focused study sessions with a timer (25, 50, or 90 minutes)
+- Specify what class you're studying
+- See active sprints from friends in real-time
 
-## Quick Start
+### 👥 Social Accountability
+- Friends can see when you're in an active sprint
+- See what class someone is studying and how much time is left
+- Join a friend's sprint instantly with one click
+- Study together silently on the same timer
 
-### 0. Install pnpm (if you don't have it yet)
+### 🔥 Streak Tracking
+- Build daily study streaks by completing sprints
+- Track your longest streak and total sprints
+- Light accountability through gentle visual cues
+- No punishment—just encouragement to stay consistent
 
-This project expects pnpm. The simplest way is to use Corepack (ships with Node.js):
+### ⏱️ Real-time Updates
+- Live countdown timer for active sprints
+- See participant count in real-time
+- Get notified when sprints complete
 
-```bash
-corepack enable
-corepack prepare pnpm@10.13.1 --activate
-```
+## Tech Stack
 
-Verify:
+- **Framework**: Next.js 16 with App Router
+- **Database**: Supabase (PostgreSQL)
+- **Auth**: Supabase Auth
+- **Real-time**: Supabase Realtime subscriptions
+- **UI**: Tailwind CSS + shadcn/ui components
+- **TypeScript**: Full type safety
 
-```bash
-pnpm --version
-```
+## Database Schema
 
-### 1. Copy This Template
+### Tables
 
-```bash
-cp -r templates/notes-app my-project
-cd my-project
-```
+- `sprints` - Study sprint sessions
+- `sprint_participants` - Tracks who joins which sprint
+- `user_streaks` - Daily streak tracking
+- `friendships` - Friend connections (ready for future use)
 
-### 2. Set Up Git (required for Husky hooks)
+### Key Features
 
-Husky installs Git hooks during `pnpm install`, but it only works if a `.git` folder exists.
+- Row Level Security (RLS) for data privacy
+- Real-time subscriptions for live updates
+- Automatic streak calculation
+- Friend visibility controls
 
-If you already have a GitHub account:
+## Getting Started
 
-```bash
-git init
-git add .
-git commit -m "Initial commit"
-git branch -M main
-```
+### Prerequisites
 
-Create an empty repository on GitHub, then connect and push:
+- Node.js 18+
+- pnpm
+- Supabase account
 
-```bash
-git remote add origin https://github.com/<your-username>/<your-repo>.git
-git push -u origin main
-```
+### Installation
 
-If you don't have a GitHub account yet (local Git only):
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   pnpm install
+   ```
 
-```bash
-git init
-git add .
-git commit -m "Initial commit"
-```
+3. Set up your environment variables (copy `.env.example` to `.env.local`):
+   ```
+   NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+   ```
 
-Then install dependencies:
+4. Run the Supabase migrations:
+   ```bash
+   supabase db push
+   ```
 
-```bash
-pnpm install
-```
+5. Start the development server:
+   ```bash
+   pnpm dev
+   ```
 
-### 3. Set Up Supabase
+## Usage
 
-1. Create a free account at [supabase.com](https://supabase.com)
-2. Create a new project
-3. Go to **Settings > API**
-4. Copy the **Project URL** (used as `NEXT_PUBLIC_SUPABASE_URL`)
-5. Copy the **anon public** API key (used as `NEXT_PUBLIC_SUPABASE_ANON_KEY`)
+### Starting a Sprint
 
-The Project URL tells the app which Supabase instance to talk to. The anon public key is safe to use in the browser and lets your app make requests that are allowed by Row Level Security policies.
+1. Log in to your account
+2. Enter the class you're studying
+3. Choose a duration (25, 50, or 90 minutes)
+4. Click "Start Sprint"
 
-### 4. Configure Environment Variables
+### Joining a Friend's Sprint
 
-Copy the example environment file:
+1. View the "Active Sprints" feed
+2. See which friends are currently studying
+3. Click "Join" on any active sprint
+4. You'll sync to their timer
 
-```bash
-cp .env.example .env.local
-```
+### Building Streaks
 
-Open `.env.local` and fill in your Supabase credentials:
+- Complete at least one sprint per day to maintain your streak
+- Your streak automatically increments when you study on consecutive days
+- Track your progress in the dashboard
 
-```
-NEXT_PUBLIC_SUPABASE_URL=https://gjkzzuqjiekpkebybmpw.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_isLrYzMnISWRMZdguWwpIQ_ia1vXZFO
-```
+## Future Features
 
-### 5. Set Up the Database
+- Friend requests and management
+- Study groups and teams
+- Sprint history and analytics
+- Gentle nudges when you haven't studied in a while
+- Study insights and patterns
 
-Install the Supabase CLI if you haven't already:
+## License
 
-```bash
-pnpm add -g supabase
-```
-
-Log in to your Supabase account:
-
-```bash
-supabase login
-```
-
-Link your project (you'll need your project ID from the Supabase dashboard URL):
-
-```bash
-supabase link
-```
-
-Push the migrations to your database:
-
-```bash
-supabase db push
-```
-
-### 6. Run the Development Server
-
-```bash
-pnpm dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) in your browser.
-
-## Project Structure
-
-```
-app/
-├── page.tsx                    # Landing page
-├── (auth)/
-│   ├── login/page.tsx         # Login page
-│   └── signup/page.tsx        # Signup page
-├── (protected)/
-│   ├── dashboard/page.tsx     # Dashboard (requires login)
-│   └── notes/                 # Notes pages (requires login)
-└── api/
-    ├── auth/                  # Authentication endpoints
-    └── notes/                 # Notes CRUD endpoints
-
-components/
-├── ui/                        # ShadCN UI components
-├── auth/                      # Login/signup forms
-├── notes/                     # Note-related components
-└── layout/                    # Header, footer
-
-lib/
-└── supabase/
-    ├── client.ts              # For client components
-    ├── server.ts              # For server components & API routes
-    └── middleware.ts          # For auth middleware
-```
-
-## Key Concepts
-
-### Authentication Flow
-
-1. User signs up with email/password
-2. Supabase sends a confirmation email
-3. User clicks the link to confirm
-4. User can now log in
-5. Middleware protects routes that require authentication
-
-### Supabase Clients
-
-There are two ways to connect to Supabase:
-
-- **Browser Client** (`lib/supabase/client.ts`): Use in components with `"use client"`
-- **Server Client** (`lib/supabase/server.ts`): Use in Server Components and API routes
-
-### Row Level Security (RLS)
-
-The database has security policies that ensure:
-- Users can only see their own notes
-- Users can only edit/delete their own notes
-- This is enforced at the database level, not just in code
-
-## Adding New Features
-
-### Creating a New Page
-
-1. Add a file in `app/(protected)/your-page/page.tsx`
-2. It will automatically require authentication
-
-### Creating a New API Route
-
-1. Add a file in `app/api/your-route/route.ts`
-2. Use `createClient()` from `lib/supabase/server`
-3. Always check authentication with `supabase.auth.getUser()`
-
-### Adding ShadCN Components
-
-```bash
-pnpm dlx shadcn@latest add [component-name]
-```
-
-See available components at [ui.shadcn.com](https://ui.shadcn.com)
-
-## Deployment
-
-### Deploy to Vercel
-
-1. Push your code to GitHub
-2. Go to [vercel.com](https://vercel.com) and import your repository
-3. Add your environment variables in Vercel's settings
-4. Deploy!
-
-### Update Supabase Settings
-
-After deploying, update your Supabase project:
-
-1. Go to **Authentication > URL Configuration**
-2. Add your production URL to "Site URL"
-3. Add your production URL to "Redirect URLs"
-
-## Learn More
-
-- [Next.js Documentation](https://nextjs.org/docs)
-- [Supabase Documentation](https://supabase.com/docs)
-- [ShadCN UI](https://ui.shadcn.com)
-
-## Common Issues
-
-### "Invalid login credentials"
-
-- Make sure you've confirmed your email
-- Check that your password is correct
-
-### "Note not found"
-
-- The note may have been deleted
-- You may not have permission (not your note)
-
-### Changes not showing
-
-- Try refreshing the page
-- Check the browser console for errors
+MIT

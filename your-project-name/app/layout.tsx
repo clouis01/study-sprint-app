@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-	title: "Notes App",
-	description: "A simple notes app built with Next.js and Supabase",
+	title: "Study Sprint",
+	description: "Study together with friends. Reduce procrastination through visible, accountable study sessions.",
 };
 
 export default function RootLayout({

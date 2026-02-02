@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { LogoutButton } from "@/components/auth/logout-button";
-import { FileText, User } from "lucide-react";
+import { Timer, User } from "lucide-react";
 
 interface HeaderProps {
 	userEmail?: string;
@@ -25,8 +25,8 @@ export function Header({ userEmail }: HeaderProps) {
 		<header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
 			<div className="container flex h-14 items-center">
 				<Link href="/dashboard" className="flex items-center gap-2 font-bold">
-					<FileText className="h-5 w-5" />
-					<span>Notes</span>
+					<Timer className="h-5 w-5" />
+					<span>Study Sprint</span>
 				</Link>
 
 				<nav className="ml-auto flex items-center gap-4">
