@@ -1,6 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { ConditionalHeader } from "@/components/layout/conditional-header";
 
+/** Protected routes use cookies and Supabase — must be dynamic, not statically prerendered. */
+export const dynamic = "force-dynamic";
+
 /**
  * Layout for protected pages (requires authentication).
  *
