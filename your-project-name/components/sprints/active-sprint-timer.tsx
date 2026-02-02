@@ -86,9 +86,11 @@ export function ActiveSprintTimer() {
       return;
     }
 
+    const sprint = activeSprint;
+
     function updateTime() {
       const now = new Date().getTime();
-      const end = new Date(activeSprint.ends_at).getTime();
+      const end = new Date(sprint.ends_at).getTime();
       const remaining = Math.max(0, Math.floor((end - now) / 1000));
       
       setTimeRemaining(remaining);
@@ -106,14 +108,14 @@ export function ActiveSprintTimer() {
 
   const completeSprint = async () => {
     if (!activeSprint || completing) return;
-    
+    const sprint = activeSprint;
     setCompleting(true);
 
     try {
       await supabase
         .from("sprints")
         .update({ status: "completed" })
-        .eq("id", activeSprint.id);
+        .eq("id", sprint.id);
 
       toast.success("Sprint completed! Great work! 🎉");
       setActiveSprint(null);
