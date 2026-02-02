@@ -16,15 +16,12 @@ export default async function ProtectedLayout({
 	children: React.ReactNode;
 }) {
 	let user: { email?: string } | null = null;
-	// Only call Supabase when env vars are set (avoids build failure on Vercel if env not configured yet)
-	if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-		try {
-			const supabase = await createClient();
-			const { data } = await supabase.auth.getUser();
-			user = data?.user ?? null;
-		} catch (err) {
-			console.error("Protected layout auth error:", err);
-		}
+	try {
+		const supabase = await createClient();
+		const { data } = await supabase.auth.getUser();
+		user = data?.user ?? null;
+	} catch (err) {
+		console.error("Protected layout auth error:", err);
 	}
 
 	return (
