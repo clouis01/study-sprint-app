@@ -9,11 +9,15 @@ import { toast } from "sonner";
 interface LogoutButtonProps {
 	variant?: "default" | "ghost" | "outline";
 	showIcon?: boolean;
+	size?: "default" | "sm" | "lg" | "icon" | "icon-sm" | "icon-lg";
+	className?: string;
 }
 
 export function LogoutButton({
 	variant = "ghost",
 	showIcon = true,
+	size,
+	className,
 }: LogoutButtonProps) {
 	const router = useRouter();
 	const [isLoading, setIsLoading] = useState(false);
@@ -44,9 +48,10 @@ export function LogoutButton({
 	return (
 		<Button
 			variant={variant}
+			size={size}
 			onClick={handleLogout}
 			disabled={isLoading}
-			className="w-full justify-start"
+			className={className ?? "w-full justify-start"}
 		>
 			{isLoading ? (
 				<Loader2 className="mr-2 h-4 w-4 animate-spin" />

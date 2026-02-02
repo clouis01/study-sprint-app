@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Timer, Users, Play } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
-import type { Sprint, SprintWithParticipants } from "@/types/sprints";
+import type { SprintWithParticipants } from "@/types/sprints";
 
 function formatTimeRemaining(endsAt: string): string {
   const now = new Date().getTime();

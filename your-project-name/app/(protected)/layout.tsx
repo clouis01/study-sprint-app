@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { Header } from "@/components/layout/header";
+import { ConditionalHeader } from "@/components/layout/conditional-header";
 
 /**
  * Layout for protected pages (requires authentication).
@@ -12,15 +12,19 @@ export default async function ProtectedLayout({
 }: {
 	children: React.ReactNode;
 }) {
-	const supabase = await createClient();
-	const {
-		data: { user },
-	} = await supabase.auth.getUser();
+	let user: { email?: string } | null = null;
+	try {
+		const supabase = await createClient();
+		const { data } = await supabase.auth.getUser();
+		user = data?.user ?? null;
+	} catch (err) {
+		console.error("Protected layout auth error:", err);
+	}
 
 	return (
 		<div className="min-h-screen flex flex-col">
-			<Header userEmail={user?.email} />
-			<main className="flex-1 container py-6">{children}</main>
+			<ConditionalHeader userEmail={user?.email} />
+			<main className="flex-1">{children}</main>
 		</div>
 	);
 }

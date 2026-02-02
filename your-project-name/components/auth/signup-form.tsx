@@ -44,8 +44,10 @@ export function SignupForm() {
 
 			setIsSuccess(true);
 			toast.success("Check your email to confirm your account!");
-		} catch {
-			toast.error("Something went wrong. Please try again.");
+		} catch (error) {
+			const msg = error instanceof Error ? error.message : String(error);
+			console.error("Signup error:", error);
+			toast.error(msg || "Something went wrong. Please try again.");
 		} finally {
 			setIsLoading(false);
 		}

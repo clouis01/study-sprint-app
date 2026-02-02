@@ -12,6 +12,9 @@ export default function HomePage() {
 						<span>Study Sprint</span>
 					</div>
 					<nav className="flex items-center gap-2">
+						<Link href="/dashboard">
+							<Button variant="ghost">Dashboard</Button>
+						</Link>
 						<Link href="/login">
 							<Button variant="ghost">Log in</Button>
 						</Link>
