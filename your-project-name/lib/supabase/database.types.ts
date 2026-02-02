@@ -41,6 +41,117 @@ export type Database = {
 				};
 				Relationships: [];
 			};
+			sprints: {
+				Row: {
+					id: string;
+					user_id: string;
+					class_name: string;
+					duration_minutes: number;
+					started_at: string;
+					ends_at: string;
+					status: string;
+					created_at: string;
+				};
+				Insert: {
+					id?: string;
+					user_id: string;
+					class_name: string;
+					duration_minutes: number;
+					started_at?: string;
+					ends_at: string;
+					status?: string;
+					created_at?: string;
+				};
+				Update: {
+					id?: string;
+					user_id?: string;
+					class_name?: string;
+					duration_minutes?: number;
+					started_at?: string;
+					ends_at?: string;
+					status?: string;
+					created_at?: string;
+				};
+				Relationships: [];
+			};
+			sprint_participants: {
+				Row: {
+					id: string;
+					sprint_id: string;
+					user_id: string;
+					joined_at: string;
+				};
+				Insert: {
+					id?: string;
+					sprint_id: string;
+					user_id: string;
+					joined_at?: string;
+				};
+				Update: {
+					id?: string;
+					sprint_id?: string;
+					user_id?: string;
+					joined_at?: string;
+				};
+				Relationships: [];
+			};
+			user_streaks: {
+				Row: {
+					id: string;
+					user_id: string;
+					current_streak: number;
+					longest_streak: number;
+					last_study_date: string | null;
+					total_sprints: number;
+					created_at: string;
+					updated_at: string;
+				};
+				Insert: {
+					id?: string;
+					user_id: string;
+					current_streak?: number;
+					longest_streak?: number;
+					last_study_date?: string | null;
+					total_sprints?: number;
+					created_at?: string;
+					updated_at?: string;
+				};
+				Update: {
+					id?: string;
+					user_id?: string;
+					current_streak?: number;
+					longest_streak?: number;
+					last_study_date?: string | null;
+					total_sprints?: number;
+					created_at?: string;
+					updated_at?: string;
+				};
+				Relationships: [];
+			};
+			friendships: {
+				Row: {
+					id: string;
+					user_id: string;
+					friend_id: string;
+					status: string;
+					created_at: string;
+				};
+				Insert: {
+					id?: string;
+					user_id: string;
+					friend_id: string;
+					status?: string;
+					created_at?: string;
+				};
+				Update: {
+					id?: string;
+					user_id?: string;
+					friend_id?: string;
+					status?: string;
+					created_at?: string;
+				};
+				Relationships: [];
+			};
 		};
 		Views: {
 			[_ in never]: never;
