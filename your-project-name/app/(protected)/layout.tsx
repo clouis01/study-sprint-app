@@ -1,6 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { ConditionalHeader } from "@/components/layout/conditional-header";
 
+/** Prevent static prerender; these routes use cookies and Supabase. */
+export const dynamic = "force-dynamic";
+
 /**
  * Layout for protected pages (requires authentication).
  *
@@ -13,12 +16,17 @@ export default async function ProtectedLayout({
 	children: React.ReactNode;
 }) {
 	let user: { email?: string } | null = null;
-	try {
-		const supabase = await createClient();
-		const { data } = await supabase.auth.getUser();
-		user = data?.user ?? null;
-	} catch (err) {
-		console.error("Protected layout auth error:", err);
+	const hasSupabaseEnv =
+		process.env.NEXT_PUBLIC_SUPABASE_URL &&
+		process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+	if (hasSupabaseEnv) {
+		try {
+			const supabase = await createClient();
+			const { data } = await supabase.auth.getUser();
+			user = data?.user ?? null;
+		} catch (err) {
+			console.error("Protected layout auth error:", err);
+		}
 	}
 
 	return (
