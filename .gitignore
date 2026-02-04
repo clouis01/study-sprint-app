@@ -1,0 +1,23 @@
+# OS and IDE
+.DS_Store
+**/.DS_Store
+*.swp
+*.swo
+.idea/
+.vscode/
+
+# Env and secrets (never commit)
+.env
+.env.local
+.env.*.local
+**/.env.local
+
+# Template / scaffold folders (keep repo to your app only)
+templates/
+
+# One-off SQL run in Supabase dashboard (not part of app code)
+**/RUN_IN_SUPABASE.sql
+
+# Stray / duplicate lock files
+pnpm-lock 2.yaml
+pnpm-lock 3.yaml
