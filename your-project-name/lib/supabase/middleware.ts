@@ -18,10 +18,9 @@ export async function updateSession(request: NextRequest) {
 	);
 
 	// If Supabase env is missing, still protect routes: redirect to login
-	const hasSupabaseEnv =
-		process.env.NEXT_PUBLIC_SUPABASE_URL &&
-		process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-	if (!hasSupabaseEnv) {
+	const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+	const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+	if (!supabaseUrl || !supabaseKey) {
 		if (isApiRoute) return NextResponse.next({ request });
 		if (!isPublicPath) {
 			const url = request.nextUrl.clone();
@@ -36,8 +35,8 @@ export async function updateSession(request: NextRequest) {
 	});
 
 	const supabase = createServerClient(
-		process.env.NEXT_PUBLIC_SUPABASE_URL,
-		process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+		supabaseUrl,
+		supabaseKey,
 		{
 			cookies: {
 				getAll() {
