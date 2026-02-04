@@ -73,7 +73,7 @@ A study accountability app that reduces procrastination by making studying visib
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
    ```
 
-4. Run the Supabase migrations:
+4. Run the Supabase migrations (local or linked project):
    ```bash
    supabase db push
    ```
@@ -82,6 +82,15 @@ A study accountability app that reduces procrastination by making studying visib
    ```bash
    pnpm dev
    ```
+
+## Deploying to Vercel
+
+1. Link the repo to Vercel and add the Supabase env vars (or use the Supabase–Vercel integration).
+2. **If "Start sprint" errors with** `Could not find the table 'public.sprints' in the schema cache`:
+   - The Supabase project that Vercel uses doesn’t have the sprints schema yet.
+   - In **Supabase Dashboard** → your (production) project → **SQL Editor** → New query:
+   - Copy the contents of **`supabase/apply-sprints-migration.sql`** and run it once.
+   - Redeploy or refresh the app; "Start sprint" should then work.
 
 ## Usage
 

@@ -9,13 +9,35 @@ import { NextResponse, type NextRequest } from "next/server";
  * for protected/auth routes.
  */
 export async function updateSession(request: NextRequest) {
+	const isApiRoute = request.nextUrl.pathname.startsWith("/api/");
+	const publicPaths = ["/", "/login", "/signup", "/auth"];
+	const isPublicPath = publicPaths.some(
+		(path) =>
+			request.nextUrl.pathname === path ||
+			request.nextUrl.pathname.startsWith("/auth/"),
+	);
+
+	// If Supabase env is missing, still protect routes: redirect to login
+	const hasSupabaseEnv =
+		process.env.NEXT_PUBLIC_SUPABASE_URL &&
+		process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+	if (!hasSupabaseEnv) {
+		if (isApiRoute) return NextResponse.next({ request });
+		if (!isPublicPath) {
+			const url = request.nextUrl.clone();
+			url.pathname = "/login";
+			return NextResponse.redirect(url);
+		}
+		return NextResponse.next({ request });
+	}
+
 	let supabaseResponse = NextResponse.next({
 		request,
 	});
 
 	const supabase = createServerClient(
-		process.env.NEXT_PUBLIC_SUPABASE_URL!,
-		process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+		process.env.NEXT_PUBLIC_SUPABASE_URL,
+		process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
 		{
 			cookies: {
 				getAll() {
@@ -45,18 +67,9 @@ export async function updateSession(request: NextRequest) {
 	} = await supabase.auth.getUser();
 
 	// Don't redirect for API routes - they handle their own auth
-	const isApiRoute = request.nextUrl.pathname.startsWith("/api/");
 	if (isApiRoute) {
 		return supabaseResponse;
 	}
-
-	// Define which paths are public (don't require auth)
-	const publicPaths = ["/", "/login", "/signup", "/auth"];
-	const isPublicPath = publicPaths.some(
-		(path) =>
-			request.nextUrl.pathname === path ||
-			request.nextUrl.pathname.startsWith("/auth/"),
-	);
 
 	// Redirect unauthenticated users away from protected routes
 	if (!user && !isPublicPath) {

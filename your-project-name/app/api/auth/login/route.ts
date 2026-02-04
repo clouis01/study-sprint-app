@@ -16,6 +16,19 @@ const loginSchema = z.object({
  */
 export async function POST(request: Request) {
 	try {
+		// Fail fast with a clear message if env is missing (e.g. Vercel not configured)
+		if (
+			!process.env.NEXT_PUBLIC_SUPABASE_URL ||
+			!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+		) {
+			return NextResponse.json(
+				{
+					error:
+						"Server is missing Supabase configuration. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in Vercel → Settings → Environment Variables.",
+				},
+				{ status: 500 },
+			);
+		}
 		const supabase = await createClient();
 		const body = await request.json();
 
@@ -44,10 +57,9 @@ export async function POST(request: Request) {
 			message: "Logged in successfully",
 			user: data.user,
 		});
-	} catch {
-		return NextResponse.json(
-			{ error: "Something went wrong. Please try again." },
-			{ status: 500 },
-		);
+	} catch (err) {
+		const message =
+			err instanceof Error ? err.message : "Something went wrong. Please try again.";
+		return NextResponse.json({ error: message }, { status: 500 });
 	}
 }
