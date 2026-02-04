@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Timer, Users, X } from "lucide-react";
+import { Timer, Users, X, Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import type { SprintWithParticipants } from "@/types/sprints";
@@ -19,6 +19,8 @@ export function ActiveSprintTimer() {
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [userId, setUserId] = useState<string | null>(null);
   const [completing, setCompleting] = useState(false);
+  const [showExtend, setShowExtend] = useState(false);
+  const [extending, setExtending] = useState(false);
   const supabase = createClient();
 
   useEffect(() => {
@@ -95,8 +97,8 @@ export function ActiveSprintTimer() {
       
       setTimeRemaining(remaining);
 
-      if (remaining === 0 && !completing) {
-        completeSprint();
+      if (remaining === 0 && !completing && !showExtend) {
+        setShowExtend(true);
       }
     }
 
@@ -106,10 +108,11 @@ export function ActiveSprintTimer() {
     return () => clearInterval(interval);
   }, [activeSprint]);
 
-  const completeSprint = async () => {
+  const completeSprint = useCallback(async () => {
     if (!activeSprint || completing) return;
     const sprint = activeSprint;
     setCompleting(true);
+    setShowExtend(false);
 
     try {
       await supabase
@@ -124,27 +127,52 @@ export function ActiveSprintTimer() {
     } finally {
       setCompleting(false);
     }
-  };
+  }, [activeSprint, completing, supabase]);
+
+  const extendSprint = useCallback(async (extraMinutes: number) => {
+    if (!activeSprint || extending) return;
+    setExtending(true);
+    try {
+      const newEndsAt = new Date(Date.now() + extraMinutes * 60 * 1000).toISOString();
+      const newDuration = (activeSprint.duration_minutes ?? 0) + extraMinutes;
+      const { error } = await supabase
+        .from("sprints")
+        .update({ ends_at: newEndsAt, duration_minutes: newDuration })
+        .eq("id", activeSprint.id);
+      if (error) throw error;
+      setActiveSprint({ ...activeSprint, ends_at: newEndsAt, duration_minutes: newDuration });
+      setTimeRemaining(extraMinutes * 60);
+      setShowExtend(false);
+      toast.success(`Added ${extraMinutes} min — momentum!`);
+    } catch (err) {
+      console.error("Error extending sprint:", err);
+      toast.error("Couldn't add time");
+    } finally {
+      setExtending(false);
+    }
+  }, [activeSprint, extending, supabase]);
 
   const handleEndEarly = async () => {
     if (!activeSprint || !userId) return;
     const uid = userId;
 
     try {
-      // Remove user from participants
-      await supabase
+      const { error: deleteError } = await supabase
         .from("sprint_participants")
         .delete()
         .eq("sprint_id", activeSprint.id)
         .eq("user_id", uid);
 
-      // Check if there are other participants
+      if (deleteError) {
+        toast.error(deleteError.message || "Could not leave sprint");
+        return;
+      }
+
       const { data: remainingParticipants } = await supabase
         .from("sprint_participants")
         .select("id")
         .eq("sprint_id", activeSprint.id);
 
-      // If no one left, mark sprint as cancelled
       if (!remainingParticipants || remainingParticipants.length === 0) {
         await supabase
           .from("sprints")
@@ -164,7 +192,49 @@ export function ActiveSprintTimer() {
     return null;
   }
 
-  const progress = ((activeSprint.duration_minutes * 60 - timeRemaining) / (activeSprint.duration_minutes * 60)) * 100;
+  const totalSeconds = (activeSprint.duration_minutes ?? 0) * 60;
+  const progress = totalSeconds > 0 ? ((totalSeconds - timeRemaining) / totalSeconds) * 100 : 0;
+
+  if (showExtend) {
+    return (
+      <Card className="p-6 bg-primary/5 border-primary/20">
+        <div className="space-y-4">
+          <h3 className="text-xl font-bold">{activeSprint.class_name}</h3>
+          <p className="text-sm text-muted-foreground">
+            Great start! Add more time and keep the momentum going.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              size="sm"
+              onClick={() => extendSprint(10)}
+              disabled={extending}
+              className="gap-1.5"
+            >
+              <Plus className="h-4 w-4" />
+              +10 min
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => extendSprint(15)}
+              disabled={extending}
+              className="gap-1.5"
+            >
+              <Plus className="h-4 w-4" />
+              +15 min
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={completeSprint}
+              disabled={completing}
+            >
+              I'm done
+            </Button>
+          </div>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card className="p-6 bg-primary/5 border-primary/20">
@@ -173,7 +243,7 @@ export function ActiveSprintTimer() {
           <div>
             <h3 className="text-2xl font-bold">{activeSprint.class_name}</h3>
             <p className="text-sm text-muted-foreground mt-1">
-              You're in an active sprint
+              You're live — friends can join your timer
             </p>
           </div>
           <Button
@@ -205,7 +275,7 @@ export function ActiveSprintTimer() {
           <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
             <div
               className="h-full bg-primary transition-all duration-1000"
-              style={{ width: `${progress}%` }}
+              style={{ width: `${Math.min(progress, 100)}%` }}
             />
           </div>
         </div>

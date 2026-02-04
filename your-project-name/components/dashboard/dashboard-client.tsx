@@ -13,7 +13,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { Zap, Play, Flame, Trophy, Target, Users } from "lucide-react";
+import { Zap, Play, Flame, Trophy, Target, Users, Circle } from "lucide-react";
 import { LogoutButton } from "@/components/auth/logout-button";
 import { ActiveSprintTimer } from "@/components/sprints/active-sprint-timer";
 import { createClient } from "@/lib/supabase/client";
@@ -33,7 +33,7 @@ function formatTimeRemaining(endsAt: string): string {
 
 export function DashboardClient() {
 	const [subject, setSubject] = useState("");
-	const [duration, setDuration] = useState("25");
+	const [duration, setDuration] = useState("5");
 	const [hasActiveSprint, setHasActiveSprint] = useState<boolean | null>(null);
 	const [refreshKey, setRefreshKey] = useState(0);
 	const [friendsSprints, setFriendsSprints] = useState<SprintWithParticipants[]>([]);
@@ -230,7 +230,15 @@ export function DashboardClient() {
 							Study Sprint
 						</span>
 					</Link>
-					<LogoutButton variant="ghost" size="sm" className="gap-2" />
+					<div className="flex items-center gap-2">
+						{hasActiveSprint === true && (
+							<span className="flex items-center gap-1.5 rounded-full bg-green-500/15 px-2.5 py-1 text-xs font-medium text-green-700 dark:text-green-400">
+								<Circle className="h-1.5 w-1.5 fill-current" />
+								Live
+							</span>
+						)}
+						<LogoutButton variant="ghost" size="sm" className="gap-2" />
+					</div>
 				</div>
 			</header>
 
@@ -252,6 +260,9 @@ export function DashboardClient() {
 												<Play className="h-5 w-5 text-primary" />
 												Start a Sprint
 											</CardTitle>
+											<p className="text-sm text-muted-foreground">
+												Pick a subject and duration. Friends see you as active when you start.
+											</p>
 										</CardHeader>
 										<CardContent className="space-y-4">
 											<div className="flex flex-col gap-4 sm:flex-row">
@@ -268,6 +279,7 @@ export function DashboardClient() {
 														<SelectValue />
 													</SelectTrigger>
 													<SelectContent>
+														<SelectItem value="5">Just 5 min</SelectItem>
 														<SelectItem value="25">25 min</SelectItem>
 														<SelectItem value="50">50 min</SelectItem>
 														<SelectItem value="90">90 min</SelectItem>
@@ -307,12 +319,19 @@ export function DashboardClient() {
 									<Users className="h-5 w-5 text-primary" />
 									Friends Studying Now
 								</CardTitle>
+								<p className="text-sm text-muted-foreground">
+									Join same timer • silent co-working. No chat needed.
+								</p>
 							</CardHeader>
 							<CardContent className="space-y-3">
 								{friendsSprints.length === 0 ? (
 									<p className="text-sm text-muted-foreground">No active sprints right now. Start one!</p>
 								) : (
-									friendsSprints.map((sprint, i) => {
+									<>
+										<p className="text-sm font-medium text-foreground">
+											A friend started studying {friendsSprints[0].class_name} — join?
+										</p>
+										{friendsSprints.map((sprint, i) => {
 										const inSprint = isUserInSprint(sprint);
 										return (
 											<motion.div
@@ -353,7 +372,8 @@ export function DashboardClient() {
 												)}
 											</motion.div>
 										);
-									})
+									})}
+									</>
 								)}
 							</CardContent>
 						</Card>
@@ -410,6 +430,28 @@ export function DashboardClient() {
 												{userStreak?.total_sprints ?? 0}
 											</p>
 											<p className="text-xs text-muted-foreground">Total sprints</p>
+										</div>
+									</div>
+								</CardContent>
+							</Card>
+						</motion.div>
+
+						<motion.div
+							initial={{ opacity: 0, y: 20 }}
+							animate={{ opacity: 1, y: 0 }}
+							transition={{ delay: 0.25 }}
+						>
+							<Card className="border-border bg-muted/30 shadow-sm">
+								<CardContent className="pt-6">
+									<div className="flex items-start gap-3">
+										<div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-secondary/10">
+											<Users className="h-5 w-5 text-secondary" />
+										</div>
+										<div>
+											<h3 className="font-semibold text-foreground">Gentle accountability</h3>
+											<p className="mt-1 text-sm text-muted-foreground">
+												When you start a sprint, friends see you're studying and can join. No punishments — just presence.
+											</p>
 										</div>
 									</div>
 								</CardContent>

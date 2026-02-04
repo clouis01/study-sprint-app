@@ -67,6 +67,7 @@ DROP POLICY IF EXISTS "Users can create own sprints" ON sprints;
 DROP POLICY IF EXISTS "Users can update own sprints" ON sprints;
 DROP POLICY IF EXISTS "Users can view sprint participants" ON sprint_participants;
 DROP POLICY IF EXISTS "Users can join sprints" ON sprint_participants;
+DROP POLICY IF EXISTS "Users can leave sprints" ON sprint_participants;
 DROP POLICY IF EXISTS "Users can view own streaks" ON user_streaks;
 DROP POLICY IF EXISTS "Users can view friends streaks" ON user_streaks;
 DROP POLICY IF EXISTS "Users can update own streaks" ON user_streaks;
@@ -113,6 +114,9 @@ CREATE POLICY "Users can view sprint participants" ON sprint_participants
 
 CREATE POLICY "Users can join sprints" ON sprint_participants
   FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can leave sprints" ON sprint_participants
+  FOR DELETE USING (auth.uid() = user_id);
 
 -- User streaks policies
 CREATE POLICY "Users can view own streaks" ON user_streaks
