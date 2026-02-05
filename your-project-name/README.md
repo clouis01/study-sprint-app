@@ -85,6 +85,8 @@ A study accountability app that reduces procrastination by making studying visib
 
 ## Deploying to Vercel
 
+**If you can't create a sprint on Vercel**, see **[docs/DEPLOYMENT_VERCEL.md](docs/DEPLOYMENT_VERCEL.md)** for a full checklist (env vars, migration, Supabase Auth URLs, and logging in on the deployed site).
+
 1. Link the repo to Vercel and add the Supabase env vars (or use the Supabase–Vercel integration).
 2. **If "Start sprint" errors with** `Could not find the table 'public.sprints' in the schema cache`:
    - The Supabase project that Vercel uses doesn’t have the sprints schema yet.

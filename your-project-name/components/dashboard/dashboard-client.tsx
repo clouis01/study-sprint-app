@@ -13,13 +13,47 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { Zap, Play, Flame, Trophy, Target, Users, Circle } from "lucide-react";
+import { Zap, Play, Flame, Trophy, Target, Users, Circle, Minimize2, BookOpen } from "lucide-react";
 import { LogoutButton } from "@/components/auth/logout-button";
 import { ActiveSprintTimer } from "@/components/sprints/active-sprint-timer";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import type { SprintWithParticipants } from "@/types/sprints";
 import type { UserStreak } from "@/types/sprints";
+
+const RECENT_SUBJECTS_KEY = "study-sprint-recent-subjects";
+const MAX_RECENT_SUBJECTS = 5;
+
+function getRecentSubjects(): string[] {
+	if (typeof window === "undefined") return [];
+	try {
+		const raw = localStorage.getItem(RECENT_SUBJECTS_KEY);
+		if (!raw) return [];
+		const parsed = JSON.parse(raw) as unknown;
+		return Array.isArray(parsed) ? parsed.filter((s) => typeof s === "string").slice(0, MAX_RECENT_SUBJECTS) : [];
+	} catch {
+		return [];
+	}
+}
+
+function addRecentSubject(subject: string) {
+	const trimmed = subject.trim();
+	if (!trimmed) return;
+	const prev = getRecentSubjects();
+	const next = [trimmed, ...prev.filter((s) => s.toLowerCase() !== trimmed.toLowerCase())].slice(0, MAX_RECENT_SUBJECTS);
+	try {
+		localStorage.setItem(RECENT_SUBJECTS_KEY, JSON.stringify(next));
+	} catch {
+		// ignore
+	}
+}
+
+function getReadyNudge(): string {
+	const hour = new Date().getHours();
+	const time =
+		hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+	return `${time} — ready for a sprint?`;
+}
 
 function formatTimeRemaining(endsAt: string): string {
 	const now = new Date().getTime();
@@ -31,6 +65,15 @@ function formatTimeRemaining(endsAt: string): string {
 	return `${minutes}m ${seconds}s`;
 }
 
+function startOfWeek(): Date {
+	const d = new Date();
+	const day = d.getDay();
+	const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+	d.setDate(diff);
+	d.setHours(0, 0, 0, 0);
+	return d;
+}
+
 export function DashboardClient() {
 	const [subject, setSubject] = useState("");
 	const [duration, setDuration] = useState("5");
@@ -40,7 +83,14 @@ export function DashboardClient() {
 	const [userStreak, setUserStreak] = useState<UserStreak | null>(null);
 	const [userId, setUserId] = useState<string | null>(null);
 	const [joining, setJoining] = useState<string | null>(null);
+	const [recentSubjects, setRecentSubjects] = useState<string[]>([]);
+	const [focusMode, setFocusMode] = useState(false);
+	const [weekStats, setWeekStats] = useState<{ count: number; minutes: number }>({ count: 0, minutes: 0 });
 	const supabase = createClient();
+
+	useEffect(() => {
+		setRecentSubjects(getRecentSubjects());
+	}, []);
 
 	// Fetch user and active sprint
 	useEffect(() => {
@@ -127,19 +177,42 @@ export function DashboardClient() {
 		};
 	}, [userId, supabase]);
 
+	// Study recap: completed sprints this week
+	useEffect(() => {
+		if (!userId) return;
+		const weekStart = startOfWeek().toISOString();
+		supabase
+			.from("sprints")
+			.select("duration_minutes")
+			.eq("user_id", userId)
+			.eq("status", "completed")
+			.gte("started_at", weekStart)
+			.then(({ data }) => {
+				const count = data?.length ?? 0;
+				const minutes = data?.reduce((acc, r) => acc + (r.duration_minutes ?? 0), 0) ?? 0;
+				setWeekStats({ count, minutes });
+			});
+	}, [userId, supabase, refreshKey]);
+
 	const startSprint = useCallback(async () => {
 		if (!subject.trim() || !userId) return;
-		const durationNum = Number.parseInt(duration, 10);
 
+		const { data: { user } } = await supabase.auth.getUser();
+		if (!user) {
+			toast.error("Session expired. Please log in again.");
+			return;
+		}
+
+		const durationNum = Number.parseInt(duration, 10);
 		const startedAt = new Date();
 		const endsAt = new Date(startedAt.getTime() + durationNum * 60 * 1000);
 
 		const { error: sprintError, data: sprint } = await supabase
 			.from("sprints")
 			.insert({
-				user_id: userId,
+				user_id: user.id,
 				class_name: subject.trim(),
-				duration_minutes: Number.parseInt(duration, 10),
+				duration_minutes: durationNum,
 				started_at: startedAt.toISOString(),
 				ends_at: endsAt.toISOString(),
 				status: "active",
@@ -149,17 +222,22 @@ export function DashboardClient() {
 
 		if (sprintError) {
 			const msg = sprintError.message ?? "";
-			const isMissing = msg.includes("does not exist") || sprintError.code === "42P01";
-			toast.error(isMissing ? "Database not set up. Run the migration." : msg);
+			const code = (sprintError as { code?: string }).code ?? "";
+			const isMissingTable = msg.includes("does not exist") || code === "42P01";
+			const isRls = code === "42501" || msg.toLowerCase().includes("row-level security") || msg.toLowerCase().includes("policy");
+			let userMsg = msg;
+			if (isMissingTable) userMsg = "Database not set up. Run the migration in Supabase (see README).";
+			else if (isRls) userMsg = "Permission denied. Log in again on this site and try starting a sprint.";
+			toast.error(userMsg);
 			return;
 		}
 
-		await supabase.from("sprint_participants").insert({ sprint_id: sprint.id, user_id: userId });
+		await supabase.from("sprint_participants").insert({ sprint_id: sprint.id, user_id: user.id });
 		const today = new Date().toISOString().split("T")[0];
-		const { data: existingStreak } = await supabase.from("user_streaks").select("*").eq("user_id", userId).single();
+		const { data: existingStreak } = await supabase.from("user_streaks").select("*").eq("user_id", user.id).single();
 		if (!existingStreak?.id) {
 			await supabase.from("user_streaks").insert({
-				user_id: userId,
+				user_id: user.id,
 				current_streak: 1,
 				longest_streak: 1,
 				last_study_date: today,
@@ -187,9 +265,11 @@ export function DashboardClient() {
 					total_sprints: (existingStreak.total_sprints ?? 0) + 1,
 					updated_at: new Date().toISOString(),
 				})
-				.eq("user_id", userId);
+				.eq("user_id", user.id);
 		}
 
+		addRecentSubject(subject.trim());
+		setRecentSubjects(getRecentSubjects());
 		toast.success("Sprint started!");
 		setHasActiveSprint(true);
 		setRefreshKey((k) => k + 1);
@@ -218,6 +298,25 @@ export function DashboardClient() {
 	const showStartForm = hasActiveSprint === false;
 	const showDbTimer = hasActiveSprint === true;
 
+	if (focusMode && showDbTimer) {
+		return (
+			<div className="min-h-screen bg-background flex flex-col">
+				<div className="flex items-center justify-between px-4 py-3 border-b border-border">
+					<span className="text-sm font-medium text-muted-foreground">Focus mode</span>
+					<Button variant="ghost" size="sm" onClick={() => setFocusMode(false)} className="gap-1.5">
+						<Minimize2 className="h-4 w-4" />
+						Exit focus
+					</Button>
+				</div>
+				<main className="flex-1 flex items-center justify-center p-6">
+					<div className="w-full max-w-md">
+						<ActiveSprintTimer onSprintEnd={() => { setRefreshKey((k) => k + 1); setFocusMode(false); }} />
+					</div>
+				</main>
+			</div>
+		);
+	}
+
 	return (
 		<div className="min-h-screen bg-background">
 			<header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
@@ -232,10 +331,16 @@ export function DashboardClient() {
 					</Link>
 					<div className="flex items-center gap-2">
 						{hasActiveSprint === true && (
-							<span className="flex items-center gap-1.5 rounded-full bg-green-500/15 px-2.5 py-1 text-xs font-medium text-green-700 dark:text-green-400">
-								<Circle className="h-1.5 w-1.5 fill-current" />
-								Live
-							</span>
+							<>
+								<Button variant="ghost" size="sm" onClick={() => setFocusMode(true)} className="gap-1.5 text-muted-foreground">
+									<Minimize2 className="h-4 w-4" />
+									Focus
+								</Button>
+								<span className="flex items-center gap-1.5 rounded-full bg-green-500/15 px-2.5 py-1 text-xs font-medium text-green-700 dark:text-green-400">
+									<Circle className="h-1.5 w-1.5 fill-current" />
+									Live
+								</span>
+							</>
 						)}
 						<LogoutButton variant="ghost" size="sm" className="gap-2" />
 					</div>
@@ -261,10 +366,29 @@ export function DashboardClient() {
 												Start a Sprint
 											</CardTitle>
 											<p className="text-sm text-muted-foreground">
+												{getReadyNudge()}
+											</p>
+											<p className="text-xs text-muted-foreground">
 												Pick a subject and duration. Friends see you as active when you start.
 											</p>
 										</CardHeader>
 										<CardContent className="space-y-4">
+											{recentSubjects.length > 0 && (
+												<div className="flex flex-wrap gap-2">
+													{recentSubjects.map((s) => (
+														<Button
+															key={s}
+															type="button"
+															variant="secondary"
+															size="sm"
+															className="h-8 text-xs"
+															onClick={() => setSubject(s)}
+														>
+															{s}
+														</Button>
+													))}
+												</div>
+											)}
 											<div className="flex flex-col gap-4 sm:flex-row">
 												<div className="flex-1">
 													<Input
@@ -308,7 +432,7 @@ export function DashboardClient() {
 									exit={{ opacity: 0, scale: 0.95 }}
 									transition={{ duration: 0.3 }}
 								>
-									<ActiveSprintTimer />
+									<ActiveSprintTimer onSprintEnd={() => setRefreshKey((k) => k + 1)} />
 								</motion.div>
 							)}
 						</AnimatePresence>
@@ -325,7 +449,13 @@ export function DashboardClient() {
 							</CardHeader>
 							<CardContent className="space-y-3">
 								{friendsSprints.length === 0 ? (
-									<p className="text-sm text-muted-foreground">No active sprints right now. Start one!</p>
+									<div className="flex flex-col items-center justify-center py-8 text-center">
+										<div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-muted">
+											<Users className="h-7 w-7 text-muted-foreground" />
+										</div>
+										<p className="text-sm font-medium text-foreground">No one studying right now</p>
+										<p className="mt-1 text-xs text-muted-foreground">Start one and invite the vibe.</p>
+									</div>
 								) : (
 									<>
 										<p className="text-sm font-medium text-foreground">
@@ -380,6 +510,27 @@ export function DashboardClient() {
 					</div>
 
 					<div className="space-y-6">
+						<motion.div
+							initial={{ opacity: 0, y: 20 }}
+							animate={{ opacity: 1, y: 0 }}
+							transition={{ delay: 0.15 }}
+						>
+							<Card className="border-border shadow-sm">
+								<CardHeader>
+									<CardTitle className="flex items-center gap-2 font-[family-name:var(--font-heading)] text-base">
+										<BookOpen className="h-4 w-4 text-primary" />
+										This week
+									</CardTitle>
+								</CardHeader>
+								<CardContent>
+									<p className="text-2xl font-bold text-foreground">{weekStats.count} sprints</p>
+									<p className="text-sm text-muted-foreground">
+										{weekStats.minutes < 60 ? `~${Math.round(weekStats.minutes)} min total` : `~${Math.round(weekStats.minutes / 60)}h total`}
+									</p>
+								</CardContent>
+							</Card>
+						</motion.div>
+
 						<motion.div
 							initial={{ opacity: 0, y: 20 }}
 							animate={{ opacity: 1, y: 0 }}
