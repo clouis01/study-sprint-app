@@ -165,4 +165,5 @@ CREATE TRIGGER update_user_streaks_updated_at
   EXECUTE FUNCTION update_updated_at_column();
 
 -- Force Supabase API (PostgREST) to reload schema cache so "public.sprints" is visible
+SELECT pg_stat_clear_snapshot();
 NOTIFY pgrst, 'reload schema';
